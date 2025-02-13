@@ -1,0 +1,13 @@
+hydra:
+  job:
+    name: causal_lm_zero_shot
+  run:
+    dir: data/outputs/${hydra.job.name}
+  sweep:
+    dir: data/outputs/${hydra.job.name}/sweep_${now:%Y%m%d_%H%M%S}
+    subdir: conf_${hydra.job.id}
+
+debug: false
+device: mps
+model: Qwen/Qwen2.5-0.5B-Instruct
+batch_size: 1

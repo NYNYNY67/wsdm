@@ -1,0 +1,10 @@
+hydra:
+  job:
+    name: evaluate
+  run:
+    dir: data/outputs/${hydra.job.name}
+  sweep:
+    dir: data/outputs/${hydra.job.name}/sweep_${now:%Y%m%d_%H%M%S}
+    subdir: conf_${hydra.job.id}
+
+eval_file_path: data/outputs/causal_lm_zero_shot/train.parquet
