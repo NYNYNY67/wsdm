@@ -30,7 +30,7 @@ def main(cfg: DictConfig):
 
     if cfg.debug:
         df_train = df_train.sample(100)
-        cfg.model = "Qwen/Qwen2.5-0.5B-Instruct"
+        # cfg.model = "Qwen/Qwen2.5-0.5B-Instruct"
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info(f"device: {cfg.device}")
@@ -80,6 +80,11 @@ def main(cfg: DictConfig):
     df_train = render_user_prompt(df_train)
     df_train = get_chat_conversation(df_train)
     df_train = apply_chat_template(df_train, tokenizer)
+    df_train = df_train[[
+        "id",
+        "text",
+        "winner",
+    ]].copy()
 
     logger.info("Inference on the training data...")
     df_train = infer(
@@ -87,7 +92,6 @@ def main(cfg: DictConfig):
         model=model,
         tokenizer=tokenizer,
         device=cfg.device,
-        batch_size=cfg.batch_size,
     )
 
     logger.info("Postprocessing the result...")

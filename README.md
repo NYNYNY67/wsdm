@@ -128,10 +128,23 @@ kaggle datasets version -p path_to_dataset -m "default comment" --dir-mode zip
 export OPENAI_API_KEY="hoge"
 ```
 
-# GPU使用率の監視
+# 計算機使用率の監視
+## GPU使用率
 
 ```
 watch nvidia-smi
+```
+
+## memory
+
+```
+watch free
+```
+
+## cpu
+
+```
+watch vmstat
 ```
 
 # flash-attentionのinstall

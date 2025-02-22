@@ -13,7 +13,6 @@ def infer(
     model: AutoModelForCausalLM,
     tokenizer: AutoTokenizer,
     device: str,
-    batch_size: int,
 ):
     texts = df["text"].values.tolist()
 
@@ -22,21 +21,22 @@ def infer(
         lambda x: tokenizer(
             x["text"],
             return_tensors="pt",
-            padding=True,
-            truncation=True,
+            padding=False,
+            truncation=False,
             padding_side="left",
         ),
-        batched=True,
+        batched=False,
     )
     dataset.set_format(
         type="torch",
         columns=["input_ids", "attention_mask"],
     )
-    dataloader = DataLoader(dataset, batch_size=batch_size)
+    dataloader = DataLoader(dataset, batch_size=1)
 
     responses = []
     for batch in tqdm(dataloader, desc="causal lm inference"):
-        batch = {k: v.to(device) for k, v in batch.items()}
+        batch = {k: v.squeeze(0).to(device) for k, v in batch.items()}
+    
         generated_ids = model.generate(
             **batch,
             max_new_tokens=10,
