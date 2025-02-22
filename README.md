@@ -147,3 +147,8 @@ MAX_JOBS=4 pip install flash-attn --no-build-isolation
 git config --global user.email "nynyny67@example.com"
 git config --global user.name "nynyny67"
 ```
+
+永続的に認証情報を保存
+```
+git config --global credential.helper store
+```
