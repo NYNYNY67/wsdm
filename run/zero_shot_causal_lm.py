@@ -66,6 +66,8 @@ def main(cfg: DictConfig):
         torch_dtype=torch_dtype,
         load_in_8bit=load_in_8bit,
         load_in_4bit=load_in_4bit,
+        bnb_4bit_compute_dtype=torch_dtype,
+        bnb_4bit_quant_type=cfg.quantization.bnb_4bit_quant_type,
     )
 
     logger.info("Preprocessing the training data...")
