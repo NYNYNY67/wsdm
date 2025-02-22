@@ -140,3 +140,10 @@ watch nvidia-smi
 ```
 MAX_JOBS=4 pip install flash-attn --no-build-isolation
 ```
+
+# git config
+
+```
+git config --global user.email "nynyny67@example.com"
+git config --global user.name "nynyny67"
+```
