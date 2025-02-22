@@ -14,3 +14,8 @@ batch_size: 1
 
 # https://huggingface.co/docs/transformers/ja/model_doc/auto#transformers.AutoModelForCausalLM.from_config.attn_implementation
 attn_implementation: flash_attention_2  # default: sdpa
+
+# quantization
+quantization:
+  enabled: true
+  n_bit: 8

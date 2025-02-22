@@ -44,6 +44,19 @@ def main(cfg: DictConfig):
     
     logger.info(f"torch_dtype: {torch_dtype}")
 
+    if cfg.quantization.enabled:
+        if cfg.quantization.n_bit == 4:
+            load_in_8bit = False
+            load_in_4bit = True
+        elif cfg.quantization.n_bit == 8:
+            load_in_8bit = True
+            load_in_4bit = False
+        else:
+            raise ValueError("n_bit must be 4 or 8.")
+    else:
+        load_in_8bit = False
+        load_in_4bit = False
+
     tokenizer = AutoTokenizer.from_pretrained(cfg.model)
     model = AutoModelForCausalLM.from_pretrained(
         cfg.model,
@@ -51,6 +64,8 @@ def main(cfg: DictConfig):
         use_cache=True,
         attn_implementation=cfg.attn_implementation,
         torch_dtype=torch_dtype,
+        load_in_8bit=load_in_8bit,
+        load_in_4bit=load_in_4bit,
     )
 
     logger.info("Preprocessing the training data...")
