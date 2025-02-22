@@ -1,9 +1,6 @@
 # 環境構築
+vast.ai, NVIDIA CUDA templateでインスタンスを作成
 
-## vim, unzipのinstall
-```
-apt install -y vim unzip
-```
 
 ## pyenvのinstall
 
@@ -27,15 +24,8 @@ source ~/.bashrc
 
 [参考](https://github.com/pyenv/pyenv)
 
-## GCC compilerのinstall
-- pyenvで用いるC言語のコンパイラをinstall
 
-```
-apt install -y build-essential
-```
-
-
-## python3.10のinstall
+## pyenvを利用したpythonのinstall
 
 - そのまま新しいversionをinstallするとpythonのインストール時にエラーが出るので、依存packageをinstallしておく
 
@@ -141,6 +131,12 @@ export OPENAI_API_KEY="hoge"
 # GPU使用率の監視
 
 ```
-nvidia-smi
+watch nvidia-smi
 ```
 
+# flash-attentionのinstall
+[参考](https://github.com/Dao-AILab/flash-attention)
+
+```
+MAX_JOBS=4 pip install flash-attn --no-build-isolation
+```

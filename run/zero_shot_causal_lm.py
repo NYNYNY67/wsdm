@@ -4,6 +4,7 @@ from omegaconf import DictConfig
 import hydra
 from hydra.core.hydra_config import HydraConfig
 import pandas as pd
+import torch
 from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
@@ -33,11 +34,23 @@ def main(cfg: DictConfig):
     logger.info(f"device: {cfg.device}")
     logger.info(f"model: {cfg.model}")
 
+    if cfg.device == "cuda":
+        if torch.cuda.is_bf16_supported():
+            torch_dtype = torch.bfloat16
+        else:
+            torch_dtype = torch.float16
+    else:
+        torch_dtype = torch.float32
+    
+    logger.info(f"torch_dtype: {torch_dtype}")
+
     tokenizer = AutoTokenizer.from_pretrained(cfg.model)
     model = AutoModelForCausalLM.from_pretrained(
         cfg.model,
         device_map=cfg.device,
         use_cache=True,
+        attn_implementation=cfg.attn_implementation,
+        torch_dtype=torch_dtype,
     )
 
     logger.info("Preprocessing the training data...")
