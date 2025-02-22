@@ -10,7 +10,7 @@ hydra:
 debug: false
 device: cuda
 model: Qwen/Qwen2.5-14B-Instruct
-batch_size: 1
+batch_size: 4
 
 # https://huggingface.co/docs/transformers/ja/model_doc/auto#transformers.AutoModelForCausalLM.from_config.attn_implementation
 attn_implementation: flash_attention_2  # default: sdpa

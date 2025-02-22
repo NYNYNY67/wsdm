@@ -8,6 +8,7 @@ import torch
 from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
+    BitsAndBytesConfig,
 )
 
 from wsdm.preprocess import (
@@ -29,20 +30,11 @@ def main(cfg: DictConfig):
 
     if cfg.debug:
         df_train = df_train.sample(100)
+        cfg.model = "Qwen/Qwen2.5-0.5B-Instruct"
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info(f"device: {cfg.device}")
     logger.info(f"model: {cfg.model}")
-
-    if cfg.device == "cuda":
-        if torch.cuda.is_bf16_supported():
-            torch_dtype = torch.bfloat16
-        else:
-            torch_dtype = torch.float16
-    else:
-        torch_dtype = torch.float32
-    
-    logger.info(f"torch_dtype: {torch_dtype}")
 
     if cfg.quantization.enabled:
         if cfg.quantization.n_bit == 4:
@@ -57,6 +49,23 @@ def main(cfg: DictConfig):
         load_in_8bit = False
         load_in_4bit = False
 
+    if cfg.device == "cuda":
+        if load_in_8bit or not torch.cuda.is_bf16_supported():
+            torch_dtype = torch.float16
+        else:
+            torch_dtype = torch.bfloat16
+    else:
+        torch_dtype = torch.float32
+    
+    logger.info(f"torch_dtype: {torch_dtype}")
+    
+    bnb_config = BitsAndBytesConfig(
+        load_in_8bit=load_in_8bit,
+        load_in_4bit=load_in_4bit,
+        bnb_4bit_compute_dtype=torch_dtype,
+        bnb_4bit_quant_type=cfg.quantization.bnb_4bit_quant_type,
+    )
+
     tokenizer = AutoTokenizer.from_pretrained(cfg.model)
     model = AutoModelForCausalLM.from_pretrained(
         cfg.model,
@@ -64,10 +73,7 @@ def main(cfg: DictConfig):
         use_cache=True,
         attn_implementation=cfg.attn_implementation,
         torch_dtype=torch_dtype,
-        load_in_8bit=load_in_8bit,
-        load_in_4bit=load_in_4bit,
-        bnb_4bit_compute_dtype=torch_dtype,
-        bnb_4bit_quant_type=cfg.quantization.bnb_4bit_quant_type,
+        quantization_config=bnb_config,
     )
 
     logger.info("Preprocessing the training data...")

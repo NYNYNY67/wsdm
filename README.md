@@ -65,7 +65,7 @@ poetry self add poetry-plugin-shell
 - デフォルトpathはインスタンスに依存するので一度適当なコマンドで認証エラーを出して参照先を確認する
 
 ```
-vim path_to_kaggle_json_dir/kaggle.json
+vim /root/.config/kaggle/kaggle.json
 ```
 
 ## コンペデータのdownload
@@ -135,6 +135,7 @@ watch nvidia-smi
 ```
 
 # flash-attentionのinstall
+poetryだとコケるので`poetry shell`で環境に入ってからpipで入れる
 [参考](https://github.com/Dao-AILab/flash-attention)
 
 ```
