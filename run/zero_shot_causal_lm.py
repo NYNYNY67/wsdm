@@ -27,7 +27,7 @@ def main(cfg: DictConfig):
     df_train = pd.read_parquet(data_dir / "original" / "train.parquet")
 
     if cfg.debug:
-        df_train = df_train.sample(10)
+        df_train = df_train.sample(100)
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info(f"device: {cfg.device}")
