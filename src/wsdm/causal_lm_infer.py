@@ -36,7 +36,7 @@ def infer(
     responses = []
     for batch in tqdm(dataloader, desc="causal lm inference"):
         batch = {k: v.squeeze(0).to(device) for k, v in batch.items()}
-    
+
         generated_ids = model.generate(
             **batch,
             max_new_tokens=10,
@@ -44,7 +44,8 @@ def infer(
         generated_ids = [
             output_ids[len(input_ids):] for input_ids, output_ids in zip(batch["input_ids"], generated_ids)
         ]
-        responses.extend(tokenizer.batch_decode(generated_ids, skip_special_tokens=True))
+        response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        responses.append(response[0])
 
     df["response"] = responses
 

@@ -5,11 +5,13 @@ from wsdm.prompt import (
     SYSTEM_PROMPT,
     USER_PROMPT_TEMPLATE,
     ASSISTANT_PROMPT,
+    ASSISTANT_TEMPLATE,
 )
 
 
-def render_user_prompt(
+def render_templates(
     df: pd.DataFrame,
+    with_answer: bool,
 ):
     """
     Render the user prompt.
@@ -22,6 +24,7 @@ def render_user_prompt(
     """
     df = df.copy()
 
+    df["system_prompt"] = SYSTEM_PROMPT
     df["user_prompt"] = df.apply(
         lambda x: USER_PROMPT_TEMPLATE.render(
             query=x["prompt"],
@@ -31,13 +34,19 @@ def render_user_prompt(
         axis=1,
     )
 
+    if with_answer:
+        df["assistant_prompt"] = df.apply(
+            lambda x: ASSISTANT_TEMPLATE.render(answer=x["winner"][-1].upper()),
+            axis=1,
+        )
+    else:
+        df["assistant_prompt"] = ASSISTANT_PROMPT
+
     return df
 
 
 def get_chat_conversation(
     df: pd.DataFrame,
-    system_prompt: str = SYSTEM_PROMPT,
-    assistant_prompt: str = ASSISTANT_PROMPT,
 ):
     """
     Get the chat conversation from the DataFrame.
@@ -52,9 +61,9 @@ def get_chat_conversation(
     """
     df["text"] = df.apply(
         lambda x: [
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": x["system_prompt"]},
             {"role": "user", "content": x["user_prompt"]},
-            {"role": "assistant", "content": assistant_prompt},
+            {"role": "assistant", "content": x["assistant_prompt"]},
         ],
         axis=1,
     )

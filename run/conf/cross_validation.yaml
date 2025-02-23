@@ -1,0 +1,3 @@
+cross_validation:
+  n_folds: 5
+  random_state: 42

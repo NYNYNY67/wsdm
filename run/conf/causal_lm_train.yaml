@@ -1,15 +1,19 @@
 hydra:
   job:
-    name: causal_lm_infer
+    name: causal_lm_train
   run:
     dir: data/outputs/${hydra.job.name}
   sweep:
     dir: data/outputs/${hydra.job.name}/sweep_${now:%Y%m%d_%H%M%S}
     subdir: conf_${hydra.job.id}
 
+defaults:
+  - cross_validation.yaml
+  - _self_
+
 debug: false
 device: cuda
-model: data/outputs/causal_lm_train/model_fold_0 # Qwen/Qwen2.5-14B-Instruct
+model: Qwen/Qwen2.5-0.5B-Instruct
 
 # https://huggingface.co/docs/transformers/ja/model_doc/auto#transformers.AutoModelForCausalLM.from_config.attn_implementation
 attn_implementation: flash_attention_2  # default: sdpa
@@ -19,3 +23,7 @@ quantization:
   enabled: true
   n_bit: 4
   bnb_4bit_quant_type: nf4
+
+# training
+epochs: 10
+lr: 1e-5

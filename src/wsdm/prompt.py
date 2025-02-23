@@ -73,9 +73,16 @@ Here is your input to process now-
 <Response_B>
 {{response_b}}
 </Response_B>
+
+Now, tell me which response you think is better for the user. You can choose either A or B.
 """
 )
 
 ASSISTANT_PROMPT = """
 Choice:
 """
+
+ASSISTANT_TEMPLATE = Template("""
+Choice:
+{{answer}}"""
+)

@@ -16,12 +16,11 @@ from wsdm.preprocess import (
     get_chat_conversation,
     apply_chat_template,
 )
-from wsdm.causal_lm_infer import infer
-from wsdm.postprocess import postprocess
-from wsdm.evaluate import evaluate
+from wsdm.cross_validation import cross_validation
+from wsdm.causal_lm_train import train
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="causal_lm_infer")
+@hydra.main(version_base=None, config_path="conf", config_name="causal_lm_train")
 def main(cfg: DictConfig):
     data_dir = pathlib.Path(__file__).resolve().parent.parent / "data"
     out_dir = pathlib.Path(HydraConfig.get().runtime.output_dir)
@@ -30,7 +29,7 @@ def main(cfg: DictConfig):
 
     if cfg.debug:
         df_train = df_train.sample(100)
-        # cfg.model = "Qwen/Qwen2.5-0.5B-Instruct"
+        cfg.epochs = 10
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info(f"device: {cfg.device}")
@@ -56,9 +55,9 @@ def main(cfg: DictConfig):
             torch_dtype = torch.bfloat16
     else:
         torch_dtype = torch.float32
-    
+
     logger.info(f"torch_dtype: {torch_dtype}")
-    
+
     bnb_config = BitsAndBytesConfig(
         load_in_8bit=load_in_8bit,
         load_in_4bit=load_in_4bit,
@@ -67,41 +66,48 @@ def main(cfg: DictConfig):
     )
 
     tokenizer = AutoTokenizer.from_pretrained(cfg.model)
-    model = AutoModelForCausalLM.from_pretrained(
-        cfg.model,
-        device_map=cfg.device,
-        use_cache=True,
-        attn_implementation=cfg.attn_implementation,
-        torch_dtype=torch_dtype,
-        quantization_config=bnb_config,
-    )
 
     logger.info("Preprocessing the training data...")
-    df_train = render_templates(df_train, with_answer=False)
+    df_train = render_templates(df_train, with_answer=True)
     df_train = get_chat_conversation(df_train)
     df_train = apply_chat_template(df_train, tokenizer)
     df_train = df_train[[
         "id",
         "text",
         "winner",
-    ]].copy()
+    ]].copy().reset_index(drop=True)
+    df_train = cross_validation(df_train, cfg.cross_validation.n_folds, cfg.cross_validation.random_state)
 
-    logger.info("Inference on the training data...")
-    df_train = infer(
-        df=df_train,
-        model=model,
-        tokenizer=tokenizer,
-        device=cfg.device,
-    )
+    for fold in range(cfg.cross_validation.n_folds):
+        logger.info(f"Training fold: {fold}")
 
-    logger.info("Postprocessing the result...")
-    df_train = postprocess(df_train)
+        df_train_fold = df_train[df_train["fold"] != fold]
+        df_valid_fold = df_train[df_train["fold"] == fold]
 
-    logger.info("Saving the result...")
-    df_train.to_parquet(out_dir / "train.parquet")
+        model = AutoModelForCausalLM.from_pretrained(
+            cfg.model,
+            device_map=cfg.device,
+            use_cache=True,
+            attn_implementation=cfg.attn_implementation,
+            torch_dtype=torch_dtype,
+            quantization_config=bnb_config,
+        )
 
-    logger.info("Evaluating the model...")
-    evaluate(df_train)
+        result = train(
+            df_train=df_train_fold,
+            df_valid=df_valid_fold,
+            model=model,
+            tokenizer=tokenizer,
+            device=cfg.device,
+            epochs=cfg.epochs,
+            lr=cfg.lr,
+        )
+
+        result["model"].save_pretrained(out_dir / f"model_fold_{fold}")
+        tokenizer.save_pretrained(out_dir / f"model_fold_{fold}")
+
+        if cfg.debug:
+            break
 
 
 if __name__ == "__main__":
