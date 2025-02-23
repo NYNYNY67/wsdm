@@ -10,12 +10,12 @@ from wsdm.preprocess import (
     render_user_prompt,
     get_chat_conversation,
 )
-from wsdm.openai_request import get_completion
+from wsdm.request_openai import get_completion
 from wsdm.postprocess import postprocess
 from wsdm.evaluate import evaluate
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="zero_shot_openai")
+@hydra.main(version_base=None, config_path="conf", config_name="causal_lm_infer_openai")
 def main(cfg: DictConfig):
     data_dir = pathlib.Path(__file__).resolve().parent.parent / "data"
     out_dir = pathlib.Path(HydraConfig.get().runtime.output_dir)

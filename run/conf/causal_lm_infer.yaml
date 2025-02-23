@@ -1,6 +1,6 @@
 hydra:
   job:
-    name: zero_shot_causal_lm
+    name: causal_lm_infer
   run:
     dir: data/outputs/${hydra.job.name}
   sweep:
