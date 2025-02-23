@@ -1,8 +1,9 @@
 # 環境構築
 vast.ai, NVIDIA CUDA templateでインスタンスを作成
 
+## pyenv + poetry
 
-## pyenvのinstall
+### pyenvのインストール
 
 ```
 curl https://pyenv.run | bash
@@ -25,7 +26,7 @@ source ~/.bashrc
 [参考](https://github.com/pyenv/pyenv)
 
 
-## pyenvを利用したpythonのinstall
+### pyenvを利用したpythonのinstall
 
 - そのまま新しいversionをinstallするとpythonのインストール時にエラーが出るので、依存packageをinstallしておく
 
@@ -40,7 +41,7 @@ pyenv install 3.13
 pyenv global 3.13
 ```
 
-## pipxのinstall
+### pipxのinstall
 - poetryのinstallのため、pipxをまずinstallする
 
 ```
@@ -50,7 +51,7 @@ pipx ensurepath
 
 [参考](https://pipx.pypa.io/stable/installation/)
 
-## poetryのinstall
+### poetryのinstall
 
 ```
 pipx install poetry
@@ -60,18 +61,35 @@ poetry self add poetry-plugin-shell
 
 [参考](https://python-poetry.org/docs/)
 
-## kaggle API認証情報
-- 下記からkaggle.jsonに認証情報を書き込む
-- デフォルトpathはインスタンスに依存するので一度適当なコマンドで認証エラーを出して参照先を確認する
+
+### 依存パッケージのインストール
 
 ```
-vim /root/.config/kaggle/kaggle.json
+cd wsdm
+poetry install
+poetry shell
 ```
 
-## コンペデータのdownload
+### flash-attentionのinstall
+poetryだとコケるので`poetry shell`で環境に入ってからpipで入れる
+[参考](https://github.com/Dao-AILab/flash-attention)
 
 ```
-kaggle competitions download -c wsdm-cup-multilingual-chatbot-arena
+MAX_JOBS=4 pip install flash-attn --no-build-isolation
+```
+
+# gitの設定
+
+## git config
+
+```
+git config --global user.email "nynyny67@example.com"
+git config --global user.name "nynyny67"
+```
+
+永続的に認証情報を保存
+```
+git config --global credential.helper store
 ```
 
 ## git pull, pushできない時の対処法
@@ -84,18 +102,20 @@ export GIT_ASKPASS=
 
 [github token発行](https://github.com/settings/tokens)
 
-## gitで毎回認証情報を求められないようにする
+
+# kaggle API
+## 認証情報
+- 下記からkaggle.jsonに認証情報を書き込む
+- デフォルトpathはインスタンスに依存するので一度適当なコマンドで認証エラーを出して参照先を確認する
 
 ```
-git config credential.helper store
+vim /root/.config/kaggle/kaggle.json
 ```
 
-[参考](https://qiita.com/Kamo123/items/c92b03278b6302c641e3)
+## コンペデータのdownload
 
-# gitのidentity設定
 ```
-git config --global user.email "yuhi.nagatsuma1996@gmail.com"
-git config --global user.name "nynyny67"
+kaggle competitions download -c wsdm-cup-multilingual-chatbot-arena
 ```
 
 ## kaggle dataset作成
@@ -119,7 +139,7 @@ kaggle datasets create -p path_to_dataset
 kaggle datasets version -p path_to_dataset -m "default comment" --dir-mode zip
 ```
 
-# openai
+# openaiのapi_key設定
 
 [参考](https://platform.openai.com/docs/quickstart)
 
@@ -145,24 +165,4 @@ watch free
 
 ```
 watch vmstat
-```
-
-# flash-attentionのinstall
-poetryだとコケるので`poetry shell`で環境に入ってからpipで入れる
-[参考](https://github.com/Dao-AILab/flash-attention)
-
-```
-MAX_JOBS=4 pip install flash-attn --no-build-isolation
-```
-
-# git config
-
-```
-git config --global user.email "nynyny67@example.com"
-git config --global user.name "nynyny67"
-```
-
-永続的に認証情報を保存
-```
-git config --global credential.helper store
 ```
