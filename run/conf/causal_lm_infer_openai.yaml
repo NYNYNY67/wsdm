@@ -7,5 +7,9 @@ hydra:
     dir: data/outputs/${hydra.job.name}/sweep_${now:%Y%m%d_%H%M%S}
     subdir: conf_${hydra.job.id}
 
+defaults:
+  - preprocess.yaml
+  - _self_
+
 debug: false
 model: gpt-4o-mini

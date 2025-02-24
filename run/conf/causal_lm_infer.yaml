@@ -7,6 +7,10 @@ hydra:
     dir: data/outputs/${hydra.job.name}/sweep_${now:%Y%m%d_%H%M%S}
     subdir: conf_${hydra.job.id}
 
+defaults:
+  - preprocess.yaml
+  - _self_
+
 debug: false
 device: cuda
 # model: data/outputs/causal_lm_train/model_fold_0
