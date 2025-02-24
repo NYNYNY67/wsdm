@@ -36,7 +36,7 @@ def infer(
     responses = []
     for batch in tqdm(dataloader, desc="causal lm inference"):
         batch = {k: v.squeeze(0).to(device) for k, v in batch.items()}
-    
+
         generated_ids = model.generate(
             **batch,
             max_new_tokens=10,

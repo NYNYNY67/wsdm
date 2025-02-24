@@ -7,6 +7,10 @@ hydra:
     dir: data/outputs/${hydra.job.name}/sweep_${now:%Y%m%d_%H%M%S}
     subdir: conf_${hydra.job.id}
 
+defaults:
+  - preprocess.yaml
+  - _self_
+
 debug: false
 device: cuda
 model: Qwen/Qwen2.5-14B-Instruct

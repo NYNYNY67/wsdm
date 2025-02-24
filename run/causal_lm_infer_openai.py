@@ -27,7 +27,7 @@ def main(cfg: DictConfig):
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info("Preprocessing the training data...")
-    df_train = render_user_prompt(df_train)
+    df_train = render_user_prompt(df_train, response_max_length=cfg.preprocess.response_max_length)
     df_train = get_chat_conversation(df_train)
 
     logger.info("Getting the completion from OpenAI...")

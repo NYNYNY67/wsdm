@@ -10,6 +10,7 @@ from wsdm.prompt import (
 
 def render_user_prompt(
     df: pd.DataFrame,
+    response_max_length: int,
 ):
     """
     Render the user prompt.
@@ -25,8 +26,8 @@ def render_user_prompt(
     df["user_prompt"] = df.apply(
         lambda x: USER_PROMPT_TEMPLATE.render(
             query=x["prompt"],
-            response_a=x["response_a"],
-            response_b=x["response_b"],
+            response_a=x["response_a"][:response_max_length],
+            response_b=x["response_b"][:response_max_length],
         ),
         axis=1,
     )

@@ -56,9 +56,9 @@ def main(cfg: DictConfig):
             torch_dtype = torch.bfloat16
     else:
         torch_dtype = torch.float32
-    
+
     logger.info(f"torch_dtype: {torch_dtype}")
-    
+
     bnb_config = BitsAndBytesConfig(
         load_in_8bit=load_in_8bit,
         load_in_4bit=load_in_4bit,
