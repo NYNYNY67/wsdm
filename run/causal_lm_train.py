@@ -1,5 +1,6 @@
 import pathlib
 from logzero import logger
+from omegaconf import OmegaConf
 from omegaconf import DictConfig
 import hydra
 from hydra.core.hydra_config import HydraConfig
@@ -9,6 +10,11 @@ from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
     BitsAndBytesConfig,
+)
+from peft import (
+    get_peft_model,
+    LoraConfig,
+    prepare_model_for_kbit_training,
 )
 
 from wsdm.preprocess import (
@@ -64,6 +70,15 @@ def main(cfg: DictConfig):
         bnb_4bit_compute_dtype=torch_dtype,
         bnb_4bit_quant_type=cfg.quantization.bnb_4bit_quant_type,
     )
+    peft_config = LoraConfig(
+        lora_alpha=cfg.lora.lora_alpha,
+        lora_dropout=cfg.lora.lora_dropout,
+        r=cfg.lora.r,
+        bias=cfg.lora.bias,
+        task_type="CAUSAL_LM",
+        target_modules=OmegaConf.to_container(cfg.lora.target_modules),
+        inference_mode=False,
+    )
 
     tokenizer = AutoTokenizer.from_pretrained(cfg.model)
 
@@ -86,12 +101,16 @@ def main(cfg: DictConfig):
 
         model = AutoModelForCausalLM.from_pretrained(
             cfg.model,
-            device_map=cfg.device,
-            use_cache=True,
+            device_map="auto",
             attn_implementation=cfg.attn_implementation,
             torch_dtype=torch_dtype,
             quantization_config=bnb_config,
+            use_cache=False,
         )
+        model.gradient_checkpointing_enable()
+        model = prepare_model_for_kbit_training(model, gradient_checkpointing_kwargs={"use_reentrant": True})
+        model = get_peft_model(model, peft_config)
+        model.print_trainable_parameters()
 
         result = train(
             df_train=df_train_fold,

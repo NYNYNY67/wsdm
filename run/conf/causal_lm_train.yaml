@@ -24,6 +24,21 @@ quantization:
   n_bit: 4
   bnb_4bit_quant_type: nf4
 
+# lora
+lora:
+  lora_alpha: 32
+  lora_dropout: 0.05
+  r: 64
+  bias: none
+  target_modules:
+    - o_proj
+    - k_proj
+    - q_proj
+    - down_proj
+    - gate_proj
+    - up_proj
+    - v_proj
+
 # training
 epochs: 10
 lr: 1e-5

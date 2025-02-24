@@ -3,8 +3,12 @@ import pandas as pd
 from torch.optim import AdamW
 # from bitsandbytes.optim import PagedAdam8bit as AdamW
 from transformers import (
-    AutoModelForCausalLM,
     AutoTokenizer,
+)
+from peft import (
+    AutoPeftModelForCausalLM,
+    LoraConfig,
+    prepare_model_for_kbit_training,
 )
 from datasets import Dataset
 from tqdm import tqdm
@@ -15,7 +19,7 @@ from wsdm.causal_lm_dataloader import get_dataloader, get_collator
 def train(
     df_train: pd.DataFrame,
     df_valid: pd.DataFrame,
-    model: AutoModelForCausalLM,
+    model: AutoPeftModelForCausalLM,
     tokenizer: AutoTokenizer,
     device: str,
     epochs: int,

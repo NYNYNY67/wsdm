@@ -24,6 +24,7 @@ openai = "^1.63.0"
 packaging = "^24.2"
 ninja = "^1.11.1.3"
 bitsandbytes = "^0.45.2"
+peft = "^0.14.0"
 
 
 [build-system]
