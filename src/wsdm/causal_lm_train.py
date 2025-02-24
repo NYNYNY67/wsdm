@@ -6,7 +6,6 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
 )
-from datasets import Dataset
 from tqdm import tqdm
 
 from wsdm.causal_lm_dataloader import get_dataloader, get_collator

@@ -30,7 +30,6 @@ def main(cfg: DictConfig):
 
     if cfg.debug:
         df_train = df_train.sample(100)
-        # cfg.model = "Qwen/Qwen2.5-0.5B-Instruct"
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info(f"device: {cfg.device}")
@@ -49,6 +48,10 @@ def main(cfg: DictConfig):
         load_in_8bit = False
         load_in_4bit = False
 
+    logger.info(f"quantization: {cfg.quantization.enabled}")
+    logger.info(f"load_in_8bit: {load_in_8bit}")
+    logger.info(f"load_in_4bit: {load_in_4bit}")
+
     if cfg.device == "cuda":
         if load_in_8bit or not torch.cuda.is_bf16_supported():
             torch_dtype = torch.float16
@@ -56,9 +59,9 @@ def main(cfg: DictConfig):
             torch_dtype = torch.bfloat16
     else:
         torch_dtype = torch.float32
-    
+
     logger.info(f"torch_dtype: {torch_dtype}")
-    
+
     bnb_config = BitsAndBytesConfig(
         load_in_8bit=load_in_8bit,
         load_in_4bit=load_in_4bit,
@@ -73,7 +76,7 @@ def main(cfg: DictConfig):
         use_cache=True,
         attn_implementation=cfg.attn_implementation,
         torch_dtype=torch_dtype,
-        quantization_config=bnb_config,
+        quantization_config=bnb_config if cfg.quantization.enabled else None,
     )
 
     logger.info("Preprocessing the training data...")
