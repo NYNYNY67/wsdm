@@ -13,7 +13,8 @@ defaults:
 
 debug: false
 device: cuda
-model: data/outputs/causal_lm_train/model_fold_0
+# model: data/outputs/causal_lm_train/model_fold_0
+model: Qwen/Qwen2.5-0.5B-Instruct
 # model: Qwen/Qwen2.5-14B-Instruct
 
 # https://huggingface.co/docs/transformers/ja/model_doc/auto#transformers.AutoModelForCausalLM.from_config.attn_implementation

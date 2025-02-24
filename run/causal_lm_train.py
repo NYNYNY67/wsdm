@@ -103,6 +103,9 @@ def main(cfg: DictConfig):
         df_train_fold = df_train[df_train["fold"] != fold]
         df_valid_fold = df_train[df_train["fold"] == fold]
 
+        if cfg.validation_data_size:
+            df_valid_fold = df_valid_fold.sample(cfg.validation_data_size, random_state=cfg.cross_validation.random_state).reset_index(drop=True)
+
         model = AutoModelForCausalLM.from_pretrained(
             cfg.model,
             device_map="auto",
@@ -124,6 +127,8 @@ def main(cfg: DictConfig):
             device=cfg.device,
             epochs=cfg.epochs,
             lr=cfg.lr,
+            eval_steps=cfg.eval_steps,
+            saturation_rounds=cfg.saturation_rounds,
         )
 
         result["model"].save_pretrained(out_dir / f"model_fold_{fold}")
