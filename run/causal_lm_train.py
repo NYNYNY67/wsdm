@@ -54,6 +54,10 @@ def main(cfg: DictConfig):
         load_in_8bit = False
         load_in_4bit = False
 
+    logger.info(f"quantization: {cfg.quantization.enabled}")
+    logger.info(f"load_in_8bit: {load_in_8bit}")
+    logger.info(f"load_in_4bit: {load_in_4bit}")
+
     if cfg.device == "cuda":
         if load_in_8bit or not torch.cuda.is_bf16_supported():
             torch_dtype = torch.float16
