@@ -35,7 +35,7 @@ def main(cfg: DictConfig):
 
     if cfg.debug:
         df_train = df_train.sample(100)
-        cfg.epochs = 10
+        cfg.epochs = 1
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info(f"device: {cfg.device}")

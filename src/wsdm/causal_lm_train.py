@@ -35,7 +35,6 @@ def train(
     list_valid_loss = []
     for epoch in range(epochs):
         model.train()
-
         n_train_samples = 0
         epoch_train_loss = 0
         for batch in tqdm(train_loader, desc=f"train epoch: {epoch}"):
@@ -53,6 +52,7 @@ def train(
         list_train_loss.append(epoch_train_loss / n_train_samples)
         logger.info(f"epoch: {epoch}, train_loss: {list_train_loss[-1]}")
 
+        model.eval()
         n_valid_samples = 0
         epoch_valid_loss = 0
         for batch in tqdm(valid_loader, desc=f"valid epoch: {epoch}"):
