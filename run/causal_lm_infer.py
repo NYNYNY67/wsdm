@@ -80,7 +80,12 @@ def main(cfg: DictConfig):
     )
 
     logger.info("Preprocessing the training data...")
-    df_train = render_templates(df_train, with_answer=False, response_max_length=cfg.preprocess.response_max_length)
+    df_train = render_templates(
+        df_train,
+        with_answer=True,
+        response_max_length=cfg.preprocess.response_max_length,
+        query_max_length=cfg.preprocess.query_max_length,
+    )
     df_train = get_chat_conversation(df_train)
     df_train = apply_chat_template(df_train, tokenizer)
     df_train = df_train[[

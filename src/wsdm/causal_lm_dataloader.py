@@ -12,7 +12,6 @@ from trl import DataCollatorForCompletionOnlyLM
 def get_dataloader(
     df: pd.DataFrame,
     tokenizer: AutoTokenizer,
-    collate_fn: callable,
 ):
     def custom_collator(batch):
         input_ids = torch.stack([item["input_ids"] for item in batch])
@@ -46,19 +45,6 @@ def get_dataloader(
     dataloader = DataLoader(
         dataset,
         batch_size=1,
-        # collate_fn=collate_fn,
         collate_fn=custom_collator,
     )
     return dataloader
-
-
-def get_collator(
-    tokenizer: AutoTokenizer,
-):
-    collator = DataCollatorForCompletionOnlyLM(
-        response_template="""
-Choice:
-""",
-        tokenizer=tokenizer,
-    )
-    return collator

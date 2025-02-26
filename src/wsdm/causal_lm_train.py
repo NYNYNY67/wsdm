@@ -13,7 +13,7 @@ from peft import (
 )
 from tqdm import tqdm
 
-from wsdm.causal_lm_dataloader import get_dataloader, get_collator
+from wsdm.causal_lm_dataloader import get_dataloader
 
 
 class Trainer:
@@ -41,10 +41,8 @@ class Trainer:
         self.saturation_rounds = saturation_rounds
         self.save_dir = save_dir
 
-        collator = get_collator(tokenizer)
-        self.collator = collator
-        self.train_loader = get_dataloader(df_train, tokenizer, collate_fn=None)
-        self.valid_loader = get_dataloader(df_valid, tokenizer, collate_fn=None)
+        self.train_loader = get_dataloader(df_train, tokenizer)
+        self.valid_loader = get_dataloader(df_valid, tokenizer)
         self.optimizer = AdamW(model.parameters(), lr=lr)
 
         self.best_loss = float("inf")
@@ -79,10 +77,13 @@ class Trainer:
                 break
 
             self.model.train()
+
             loss, accuracy = self.train_step(batch)
 
             self.train_loss_round += loss
             self.train_metric_round += accuracy
+
+            del loss, accuracy
 
             if self.n_iteration % self.eval_steps == 0:
                 self.if_eval_step()
@@ -129,8 +130,10 @@ class Trainer:
 
     def train_step(self, batch: dict):
         batch = {k: v.to(self.device) for k, v in batch.items()}
+
         self.model.train()
         output = self.model(**batch, logits_to_keep=1)
+
         loss = output.loss
         loss.backward()
         self.optimizer.step()
@@ -148,19 +151,21 @@ class Trainer:
 
     def valid(self):
         self.model.eval()
-        n_valid_samples = 0
-        valid_loss = 0
-        valid_metric = 0
-        for batch in tqdm(self.valid_loader, desc="valid"):
-            loss, metric = self.valid_step(batch)
 
-            n_valid_samples += 1
-            valid_loss += loss
-            valid_metric += metric
+        with torch.no_grad():
+            n_valid_samples = 0
+            valid_loss = 0
+            valid_metric = 0
+            for batch in tqdm(self.valid_loader, desc="valid"):
+                loss, metric = self.valid_step(batch)
 
-        valid_loss = valid_loss / n_valid_samples
-        valid_metric = valid_metric / n_valid_samples
-        return valid_loss, valid_metric
+                n_valid_samples += 1
+                valid_loss += loss
+                valid_metric += metric
+
+            valid_loss = valid_loss / n_valid_samples
+            valid_metric = valid_metric / n_valid_samples
+            return valid_loss, valid_metric
 
     def valid_step(self, batch: dict):
         batch = {k: v.to(self.device) for k, v in batch.items()}
@@ -175,11 +180,19 @@ class Trainer:
 
     def plot_learning_log(self):
         fig, ax = plt.subplots()
-        ax.set_title("learning log")
+        ax.set_title("learning log (loss)")
         ax.plot(self.log_steps, self.train_losses, label="train")
         ax.plot(self.log_steps, self.valid_losses, label="valid")
         ax.legend()
-        ax.set_xticks(self.log_steps)
         ax.set_xlabel("iteration")
         ax.set_ylabel("loss")
-        fig.savefig(self.save_dir / "learning_log.png")
+        fig.savefig(self.save_dir / "learning_log_loss.png")
+
+        fig, ax = plt.subplots()
+        ax.set_title("learning log (metric)")
+        ax.plot(self.log_steps, self.train_metrics, label="train")
+        ax.plot(self.log_steps, self.valid_metrics, label="valid")
+        ax.legend()
+        ax.set_xlabel("iteration")
+        ax.set_ylabel("metric")
+        fig.savefig(self.save_dir / "learning_log_metric.png")

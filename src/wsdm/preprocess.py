@@ -12,6 +12,7 @@ from wsdm.prompt import (
 def render_templates(
     df: pd.DataFrame,
     with_answer: bool,
+    query_max_length: int,
     response_max_length: int,
 ):
     """
@@ -28,7 +29,7 @@ def render_templates(
     df["system_prompt"] = SYSTEM_PROMPT
     df["user_prompt"] = df.apply(
         lambda x: USER_PROMPT_TEMPLATE.render(
-            query=x["prompt"],
+            query=x["prompt"][:query_max_length],
             response_a=x["response_a"][:response_max_length],
             response_b=x["response_b"][:response_max_length],
         ),
