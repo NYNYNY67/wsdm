@@ -1,5 +1,6 @@
 import pathlib
 from logzero import logger
+import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 from torch.optim import AdamW
@@ -42,18 +43,22 @@ class Trainer:
 
         collator = get_collator(tokenizer)
         self.collator = collator
-        self.train_loader = get_dataloader(df_train, tokenizer, collator)
-        self.valid_loader = get_dataloader(df_valid, tokenizer, collator)
+        self.train_loader = get_dataloader(df_train, tokenizer, collate_fn=None)
+        self.valid_loader = get_dataloader(df_valid, tokenizer, collate_fn=None)
         self.optimizer = AdamW(model.parameters(), lr=lr)
 
         self.best_loss = float("inf")
+        self.log_steps = []
         self.train_losses = []
         self.valid_losses = []
+        self.train_metrics = []
+        self.valid_metrics = []
 
         self.n_iteration = 0
         self.rounds_since_last_best_model = 0
         self.n_iteration_in_round = 0
         self.train_loss_round = 0
+        self.train_metric_round = 0
 
         self.is_early_stopped = False
 
@@ -65,31 +70,42 @@ class Trainer:
             logger.info(f"epoch: {epoch}")
             self.train_epoch()
 
+        self.plot_learning_log()
+
     def train_epoch(self):
         for batch in tqdm(self.train_loader, desc="train"):
+
             if self.is_early_stopped:
                 break
 
             self.model.train()
-            loss = self.train_step(batch)
+            loss, accuracy = self.train_step(batch)
 
             self.train_loss_round += loss
+            self.train_metric_round += accuracy
 
             if self.n_iteration % self.eval_steps == 0:
                 self.if_eval_step()
 
     def if_eval_step(self):
         train_loss = self.train_loss_round / self.n_iteration_in_round
-        valid_loss = self.valid()
+        train_metric = self.train_metric_round / self.n_iteration_in_round
+
+        valid_loss, valid_metric = self.valid()
 
         logger.info(f"n_iteration: {self.n_iteration}")
         logger.info(f"train_loss: {train_loss}, valid_loss: {valid_loss}")
+        logger.info(f"train_metric: {train_metric}, valid_metric: {valid_metric}")
 
+        self.log_steps.append(self.n_iteration)
         self.train_losses.append(train_loss)
         self.valid_losses.append(valid_loss)
+        self.train_metrics.append(train_metric)
+        self.valid_metrics.append(valid_metric)
 
         self.train_loss_round = 0
         self.n_iteration_in_round = 0
+        self.train_metric_round = 0
 
         if valid_loss < self.best_loss:
             self.if_best(valid_loss)
@@ -114,7 +130,7 @@ class Trainer:
     def train_step(self, batch: dict):
         batch = {k: v.to(self.device) for k, v in batch.items()}
         self.model.train()
-        output = self.model(**batch, logits_to_keep=10)
+        output = self.model(**batch, logits_to_keep=1)
         loss = output.loss
         loss.backward()
         self.optimizer.step()
@@ -123,23 +139,47 @@ class Trainer:
         self.n_iteration += 1
         self.n_iteration_in_round += 1
 
-        return loss.item()
+        labels = batch["labels"][:, -1]
+        preds = output.logits.argmax(dim=-1)[:, -2]
+
+        accuracy = (labels == preds).float().mean()
+
+        return loss.item(), accuracy.item()
 
     def valid(self):
         self.model.eval()
         n_valid_samples = 0
         valid_loss = 0
+        valid_metric = 0
         for batch in tqdm(self.valid_loader, desc="valid"):
-            loss = self.valid_step(batch)
+            loss, metric = self.valid_step(batch)
 
             n_valid_samples += 1
             valid_loss += loss
+            valid_metric += metric
 
         valid_loss = valid_loss / n_valid_samples
-        return valid_loss
+        valid_metric = valid_metric / n_valid_samples
+        return valid_loss, valid_metric
 
     def valid_step(self, batch: dict):
         batch = {k: v.to(self.device) for k, v in batch.items()}
-        output = self.model(**batch, logits_to_keep=10)
+        output = self.model(**batch, logits_to_keep=1)
         loss = output.loss
-        return loss.item()
+
+        labels = batch["labels"][:, -1]
+        preds = output.logits.argmax(dim=-1)[:, -2]
+
+        accuracy = (labels == preds).float().mean()
+        return loss.item(), accuracy.item()
+
+    def plot_learning_log(self):
+        fig, ax = plt.subplots()
+        ax.set_title("learning log")
+        ax.plot(self.log_steps, self.train_losses, label="train")
+        ax.plot(self.log_steps, self.valid_losses, label="valid")
+        ax.legend()
+        ax.set_xticks(self.log_steps)
+        ax.set_xlabel("iteration")
+        ax.set_ylabel("loss")
+        fig.savefig(self.save_dir / "learning_log.png")

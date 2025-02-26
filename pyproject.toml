@@ -27,6 +27,7 @@ bitsandbytes = "^0.45.2"
 peft = "^0.14.0"
 scikit-learn = "^1.6.1"
 trl = "^0.15.1"
+matplotlib = "^3.10.0"
 
 
 [build-system]

@@ -1,5 +1,6 @@
 from typing import Optional
 import pandas as pd
+import torch
 from torch.utils.data import DataLoader
 from transformers import (
     AutoTokenizer,
@@ -13,6 +14,17 @@ def get_dataloader(
     tokenizer: AutoTokenizer,
     collate_fn: callable,
 ):
+    def custom_collator(batch):
+        input_ids = torch.stack([item["input_ids"] for item in batch])
+        attention_masks = torch.stack([item["attention_mask"] for item in batch])
+        labels = input_ids.clone()
+        labels[:, :-1] = -100
+        return {
+            "input_ids": input_ids,
+            "attention_mask": attention_masks,
+            "labels": labels,
+        }
+
     texts = df["text"].values.tolist()
 
     dataset = Dataset.from_dict({"text": texts})
@@ -31,7 +43,12 @@ def get_dataloader(
         type="torch",
         columns=["input_ids", "attention_mask"],
     )
-    dataloader = DataLoader(dataset, batch_size=1, collate_fn=collate_fn)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=1,
+        # collate_fn=collate_fn,
+        collate_fn=custom_collator,
+    )
     return dataloader
 
 
@@ -39,7 +56,9 @@ def get_collator(
     tokenizer: AutoTokenizer,
 ):
     collator = DataCollatorForCompletionOnlyLM(
-        response_template="<|im_start|>assistant",
+        response_template="""
+Choice:
+""",
         tokenizer=tokenizer,
     )
     return collator

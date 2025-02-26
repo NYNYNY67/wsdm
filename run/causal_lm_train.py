@@ -23,7 +23,7 @@ from wsdm.preprocess import (
     apply_chat_template,
 )
 from wsdm.cross_validation import cross_validation
-from wsdm.causal_lm_train import train, Trainer
+from wsdm.causal_lm_train import Trainer
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="causal_lm_train")
@@ -34,11 +34,11 @@ def main(cfg: DictConfig):
     df_train = pd.read_parquet(data_dir / "original" / "train.parquet")
 
     if cfg.debug:
-        df_train = df_train.sample(100)
-        cfg.epochs = 1
-        cfg.validation_data_size = 10
+        df_train = df_train.sample(1000)
+        cfg.epochs = 10
+        cfg.validation_data_size = 100
         cfg.eval_steps = 20
-        cfg.saturation_rounds = 1
+        cfg.saturation_rounds = 10
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info(f"device: {cfg.device}")
@@ -88,6 +88,12 @@ def main(cfg: DictConfig):
     )
 
     tokenizer = AutoTokenizer.from_pretrained(cfg.model)
+    option_to_token_id = {
+        "A": tokenizer.encode("A", add_special_tokens=False)[0],
+        "B": tokenizer.encode("B", add_special_tokens=False)[0],
+    }
+    # print(tokenizer.decode([2582,    362,     33,    198]))
+    # exit()
 
     logger.info("Preprocessing the training data...")
     df_train = render_templates(df_train, with_answer=True, response_max_length=cfg.preprocess.response_max_length)
@@ -98,6 +104,9 @@ def main(cfg: DictConfig):
         "text",
         "winner",
     ]].copy().reset_index(drop=True)
+    # print(df_train["text"].iloc[0][-100:])
+    # exit()
+
     df_train = cross_validation(df_train, cfg.cross_validation.n_folds, cfg.cross_validation.random_state)
 
     for fold in range(cfg.cross_validation.n_folds):

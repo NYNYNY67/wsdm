@@ -31,31 +31,8 @@ Determine which response is more likely to be selected by a user based on the fo
 - Sound reasoning and logic
 - Format and presentation
 
-**Output:**
-Respond with one of the following:
-- Choice: A
-- Choice: B
-
 **Important Notes:**
 - No explanations are needed.
-
-**Example:**
-Input:
-
-<Query>
-What is the capital of France?
-</Query>
-
-<Response_A>
-The capital of France is Paris.
-</Response_A>
-
-<Response_B>
-Paris is the capital of France. It's a beautiful city with lots of history.
-</Response_B>
-
-Choice:
-A
 """
 
 USER_PROMPT_TEMPLATE = Template(
@@ -80,6 +57,7 @@ Now, tell me which response you think is better for the user. You can choose eit
 
 ASSISTANT_PROMPT = """
 Choice:
+
 """
 
 ASSISTANT_TEMPLATE = Template("""
