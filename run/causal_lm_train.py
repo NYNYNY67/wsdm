@@ -23,7 +23,7 @@ from wsdm.preprocess import (
     apply_chat_template,
 )
 from wsdm.cross_validation import cross_validation
-from wsdm.causal_lm_train import train
+from wsdm.causal_lm_train import train, Trainer
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="causal_lm_train")
@@ -36,6 +36,9 @@ def main(cfg: DictConfig):
     if cfg.debug:
         df_train = df_train.sample(100)
         cfg.epochs = 1
+        cfg.validation_data_size = 10
+        cfg.eval_steps = 20
+        cfg.saturation_rounds = 1
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info(f"device: {cfg.device}")
@@ -119,7 +122,22 @@ def main(cfg: DictConfig):
         model = get_peft_model(model, peft_config)
         model.print_trainable_parameters()
 
-        result = train(
+        # result = train(
+        #     df_train=df_train_fold,
+        #     df_valid=df_valid_fold,
+        #     model=model,
+        #     tokenizer=tokenizer,
+        #     device=cfg.device,
+        #     epochs=cfg.epochs,
+        #     lr=cfg.lr,
+        #     eval_steps=cfg.eval_steps,
+        #     saturation_rounds=cfg.saturation_rounds,
+        # )
+
+        # result["model"].save_pretrained(out_dir / f"model_fold_{fold}")
+        # tokenizer.save_pretrained(out_dir / f"model_fold_{fold}")
+
+        trainer = Trainer(
             df_train=df_train_fold,
             df_valid=df_valid_fold,
             model=model,
@@ -129,10 +147,9 @@ def main(cfg: DictConfig):
             lr=cfg.lr,
             eval_steps=cfg.eval_steps,
             saturation_rounds=cfg.saturation_rounds,
+            save_dir=out_dir / f"model_fold_{fold}",
         )
-
-        result["model"].save_pretrained(out_dir / f"model_fold_{fold}")
-        tokenizer.save_pretrained(out_dir / f"model_fold_{fold}")
+        trainer.train()
 
         if cfg.debug:
             break
