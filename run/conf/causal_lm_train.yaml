@@ -42,7 +42,7 @@ lora:
 
 # training
 epochs: 10
-lr: 1e-5
-eval_steps: 1000
+lr: 1e-4
+eval_steps: 500
 saturation_rounds: 3
 validation_data_size: 500
