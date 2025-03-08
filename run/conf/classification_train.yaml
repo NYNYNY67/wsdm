@@ -46,5 +46,5 @@ lora:
 epochs: 10
 lr: 1e-4
 eval_steps: 500
-saturation_rounds: 3
+saturation_rounds: 100
 validation_data_size: 500

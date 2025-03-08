@@ -100,11 +100,6 @@ def main(cfg: DictConfig):
     )
     df_train = get_chat_conversation(df_train)
     df_train = apply_chat_template(df_train, tokenizer)
-    df_train = df_train[[
-        "id",
-        "text",
-        "winner",
-    ]].copy().reset_index(drop=True)
 
     for fold in range(cfg.cross_validation.n_folds):
         logger.info(f"Training fold: {fold}")
