@@ -1,0 +1,25 @@
+hydra:
+  job:
+    name: classification_infer
+  run:
+    dir: data/outputs/${hydra.job.name}
+  sweep:
+    dir: data/outputs/${hydra.job.name}/sweep_${now:%Y%m%d_%H%M%S}
+    subdir: conf_${hydra.job.id}
+
+defaults:
+  - preprocess.yaml
+  - _self_
+
+debug: false
+device: cuda
+model: Qwen/Qwen2.5-0.5B-Instruct
+
+# https://huggingface.co/docs/transformers/ja/model_doc/auto#transformers.AutoModelForCausalLM.from_config.attn_implementation
+attn_implementation: flash_attention_2  # default: sdpa
+
+# quantization
+quantization:
+  enabled: true
+  n_bit: 4
+  bnb_4bit_quant_type: nf4
