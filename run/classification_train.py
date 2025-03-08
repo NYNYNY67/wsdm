@@ -23,7 +23,7 @@ from wsdm.preprocess import (
     apply_chat_template,
 )
 from wsdm.cross_validation import cross_validation
-from wsdm.classification_train import Trainer
+from wsdm.classification.train import ClassificationTrainer
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="classification_train")
@@ -36,10 +36,10 @@ def main(cfg: DictConfig):
 
     if cfg.debug:
         df_train = df_train.sample(1000)
-        cfg.epochs = 10
+        cfg.training.epochs = 10
         cfg.validation_data_size = 100
-        cfg.eval_steps = 20
-        cfg.saturation_rounds = 10
+        cfg.training.eval_steps = 20
+        cfg.early_stopping.saturation_rounds = 10
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info(f"device: {cfg.device}")
@@ -124,17 +124,19 @@ def main(cfg: DictConfig):
         model = get_peft_model(model, peft_config)
         model.print_trainable_parameters()
 
-        trainer = Trainer(
+        trainer = ClassificationTrainer(
             df_train=df_train_fold,
             df_valid=df_valid_fold,
             model=model,
             tokenizer=tokenizer,
             device=cfg.device,
-            epochs=cfg.epochs,
-            lr=cfg.lr,
-            eval_steps=cfg.eval_steps,
-            saturation_rounds=cfg.saturation_rounds,
+            epochs=cfg.training.epochs,
+            lr=cfg.training.lr,
+            eval_steps=cfg.training.eval_steps,
+            saturation_rounds=cfg.early_stopping.saturation_rounds,
             save_dir=out_dir / f"model_fold_{fold}",
+            early_stopping_criterion=cfg.early_stopping.criterion,
+            larger_is_better=cfg.early_stopping.larger_is_better,
         )
         trainer.train()
 

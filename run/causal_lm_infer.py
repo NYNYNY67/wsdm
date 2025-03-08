@@ -10,13 +10,15 @@ from transformers import (
     AutoModelForCausalLM,
     BitsAndBytesConfig,
 )
+from peft import PeftModel
 
 from wsdm.preprocess import (
     render_templates,
     get_chat_conversation,
     apply_chat_template,
 )
-from wsdm.causal_lm_infer import infer
+from wsdm.cross_validation import cross_validation
+from wsdm.causal_lm.infer import infer
 from wsdm.postprocess import postprocess
 from wsdm.evaluate import evaluate
 
@@ -27,6 +29,8 @@ def main(cfg: DictConfig):
     out_dir = pathlib.Path(HydraConfig.get().runtime.output_dir)
 
     df_train = pd.read_parquet(data_dir / "original" / "train.parquet")
+    df_train = cross_validation(df_train, cfg.cross_validation.n_folds, cfg.cross_validation.random_state)
+    df_train = df_train[df_train["fold"] == cfg.fold].copy()
 
     if cfg.debug:
         df_train = df_train.sample(100)
@@ -77,6 +81,11 @@ def main(cfg: DictConfig):
         attn_implementation=cfg.attn_implementation,
         torch_dtype=torch_dtype,
         quantization_config=bnb_config if cfg.quantization.enabled else None,
+    )
+    model = PeftModel.from_pretrained(
+        model,
+        model_id=pathlib.Path(cfg.peft_dir),
+        device=cfg.device,
     )
 
     logger.info("Preprocessing the training data...")

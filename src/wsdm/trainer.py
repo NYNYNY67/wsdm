@@ -8,11 +8,9 @@ from transformers import (
     AutoTokenizer,
 )
 from peft import (
-    AutoPeftModelForCausalLM,
+    AutoPeftModel,
 )
 from tqdm import tqdm
-
-from wsdm.causal_lm_dataloader import get_dataloader
 
 
 class Trainer:
@@ -20,7 +18,7 @@ class Trainer:
         self,
         df_train: pd.DataFrame,
         df_valid: pd.DataFrame,
-        model: AutoPeftModelForCausalLM,
+        model: AutoPeftModel,
         tokenizer: AutoTokenizer,
         device: str,
         epochs: int,
@@ -28,6 +26,8 @@ class Trainer:
         eval_steps: int,
         saturation_rounds: int,
         save_dir: pathlib.Path,
+        early_stopping_criterion: str,
+        larger_is_better: bool,
     ):
         self.df_train = df_train
         self.df_valid = df_valid
@@ -39,12 +39,15 @@ class Trainer:
         self.eval_steps = eval_steps
         self.saturation_rounds = saturation_rounds
         self.save_dir = save_dir
+        self.early_stopping_criterion = early_stopping_criterion
+        self.larger_is_better = larger_is_better
 
-        self.train_loader = get_dataloader(df_train, tokenizer)
-        self.valid_loader = get_dataloader(df_valid, tokenizer)
+        self.train_loader = self.get_dataloader(df_train)
+        self.valid_loader = self.get_dataloader(df_valid)
         self.optimizer = AdamW(model.parameters(), lr=lr)
 
         self.best_loss = float("inf")
+        self.best_metric = float("-inf") if larger_is_better else float("inf")
         self.log_steps = []
         self.train_losses = []
         self.valid_losses = []
@@ -58,6 +61,9 @@ class Trainer:
         self.train_metric_round = 0
 
         self.is_early_stopped = False
+
+    def get_dataloader(self, df: pd.DataFrame):
+        raise NotImplementedError()
 
     def train(self):
         for epoch in range(self.epochs):
@@ -77,12 +83,12 @@ class Trainer:
 
             self.model.train()
 
-            loss, accuracy = self.train_step(batch)
+            loss, metric = self.train_step(batch)
 
             self.train_loss_round += loss
-            self.train_metric_round += accuracy
+            self.train_metric_round += metric
 
-            del loss, accuracy
+            del loss, metric
 
             if self.n_iteration % self.eval_steps == 0:
                 self.if_eval_step()
@@ -107,46 +113,44 @@ class Trainer:
         self.n_iteration_in_round = 0
         self.train_metric_round = 0
 
-        if valid_loss < self.best_loss:
-            self.if_best(valid_loss)
+        if self.early_stopping_criterion == "loss":
+            if valid_loss < self.best_loss:
+                self.if_best(valid_loss, valid_metric)
+            else:
+                self.if_not_best(valid_loss, valid_metric)
+        elif self.early_stopping_criterion == "metric":
+            if self.larger_is_better:
+                if valid_metric > self.best_metric:
+                    self.if_best(valid_loss, valid_metric)
+                else:
+                    self.if_not_best(valid_loss, valid_metric)
+            else:
+                if valid_metric < self.best_metric:
+                    self.if_best(valid_loss, valid_metric)
+                else:
+                    self.if_not_best(valid_loss, valid_metric)
         else:
-            self.if_not_best(valid_loss)
+            raise ValueError(f"early_stopping_criterion: {self.early_stopping_criterion} is not supported")
 
-    def if_best(self, valid_loss):
+    def if_best(self, valid_loss, valid_metric):
         self.best_loss = valid_loss
+        self.best_metric = valid_metric
         self.model.save_pretrained(self.save_dir)
-        logger.info(f"best model updated, valid_loss: {self.best_loss}")
+        logger.info(f"best model updated, valid_loss: {self.best_loss}, valid_metric: {self.best_metric}")
 
         self.rounds_since_last_best_model = 0
 
-    def if_not_best(self, valid_loss):
+    def if_not_best(self, valid_loss, valid_metric):
         self.rounds_since_last_best_model += 1
-        logger.info(f"model not updated, valid_loss: {valid_loss}, best_loss: {self.best_loss}")
+        logger.info(f"model not updated, valid_loss: {valid_loss}, valid_metric: {valid_metric}")
+        logger.info(f"best_loss: {self.best_loss}, best_metric: {self.best_metric}")
 
         if self.rounds_since_last_best_model >= self.saturation_rounds:
             logger.info(f"early stopping at step: {self.n_iteration}")
             self.is_early_stopped = True
 
     def train_step(self, batch: dict):
-        batch = {k: v.to(self.device) for k, v in batch.items()}
-
-        self.model.train()
-        output = self.model(**batch, logits_to_keep=1)
-
-        loss = output.loss
-        loss.backward()
-        self.optimizer.step()
-        self.optimizer.zero_grad()
-
-        self.n_iteration += 1
-        self.n_iteration_in_round += 1
-
-        labels = batch["labels"][:, -1]
-        preds = output.logits.argmax(dim=-1)[:, -2]
-
-        accuracy = (labels == preds).float().mean()
-
-        return loss.item(), accuracy.item()
+        raise NotImplementedError()
 
     def valid(self):
         self.model.eval()
@@ -167,15 +171,7 @@ class Trainer:
             return valid_loss, valid_metric
 
     def valid_step(self, batch: dict):
-        batch = {k: v.to(self.device) for k, v in batch.items()}
-        output = self.model(**batch, logits_to_keep=1)
-        loss = output.loss
-
-        labels = batch["labels"][:, -1]
-        preds = output.logits.argmax(dim=-1)[:, -2]
-
-        accuracy = (labels == preds).float().mean()
-        return loss.item(), accuracy.item()
+        raise NotImplementedError()
 
     def plot_learning_log(self):
         fig, ax = plt.subplots()

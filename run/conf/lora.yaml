@@ -1,0 +1,15 @@
+lora:
+  lora_alpha: 16
+  lora_dropout: 0.05
+  r: 16
+  bias: none
+  target_modules:
+    - o_proj
+    - k_proj
+    - q_proj
+    - down_proj
+    - gate_proj
+    - up_proj
+    - v_proj
+  modules_to_save:
+    - score

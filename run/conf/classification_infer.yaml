@@ -10,6 +10,7 @@ hydra:
 defaults:
   - preprocess.yaml
   - cross_validation.yaml
+  - quantization.yaml
   - _self_
 
 debug: false
@@ -19,11 +20,5 @@ peft_dir: data/outputs/classification_train/model_fold_0
 
 # https://huggingface.co/docs/transformers/ja/model_doc/auto#transformers.AutoModelForCausalLM.from_config.attn_implementation
 attn_implementation: flash_attention_2  # default: sdpa
-
-# quantization
-quantization:
-  enabled: true
-  n_bit: 4
-  bnb_4bit_quant_type: nf4
 
 fold: 0

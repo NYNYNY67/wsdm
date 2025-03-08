@@ -1,0 +1,4 @@
+early_stopping:
+  saturation_rounds: 100
+  criterion: loss
+  larger_is_better: false

@@ -19,7 +19,7 @@ from wsdm.preprocess import (
     apply_chat_template,
 )
 from wsdm.cross_validation import cross_validation
-from wsdm.classification_infer import infer
+from wsdm.classification.infer import infer
 from wsdm.evaluate import evaluate
 
 

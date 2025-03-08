@@ -10,39 +10,16 @@ hydra:
 defaults:
   - cross_validation.yaml
   - preprocess.yaml
+  - lora.yaml
+  - quantization.yaml
+  - training.yaml
+  - early_stopping.yaml
   - _self_
 
 debug: false
 device: cuda
 model: Qwen/Qwen2.5-7B-Instruct
+validation_data_size: 500
 
 # https://huggingface.co/docs/transformers/ja/model_doc/auto#transformers.AutoModelForCausalLM.from_config.attn_implementation
 attn_implementation: flash_attention_2  # default: sdpa
-
-# quantization
-quantization:
-  enabled: true
-  n_bit: 4
-  bnb_4bit_quant_type: nf4
-
-# lora
-lora:
-  lora_alpha: 16
-  lora_dropout: 0.05
-  r: 8
-  bias: none
-  target_modules:
-    - o_proj
-    - k_proj
-    - q_proj
-    - down_proj
-    - gate_proj
-    - up_proj
-    - v_proj
-
-# training
-epochs: 10
-lr: 1e-4
-eval_steps: 500
-saturation_rounds: 3
-validation_data_size: 500

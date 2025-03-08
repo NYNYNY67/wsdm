@@ -1,0 +1,4 @@
+quantization:
+  enabled: true
+  n_bit: 4
+  bnb_4bit_quant_type: nf4

@@ -23,7 +23,7 @@ from wsdm.preprocess import (
     apply_chat_template,
 )
 from wsdm.cross_validation import cross_validation
-from wsdm.causal_lm_train import Trainer
+from wsdm.causal_lm.train import CausalLmTrainer
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="causal_lm_train")
@@ -36,10 +36,10 @@ def main(cfg: DictConfig):
 
     if cfg.debug:
         df_train = df_train.sample(1000)
-        cfg.epochs = 10
+        cfg.training.epochs = 10
         cfg.validation_data_size = 100
-        cfg.eval_steps = 20
-        cfg.saturation_rounds = 10
+        cfg.training.eval_steps = 20
+        cfg.early_stopping.saturation_rounds = 10
         logger.warning("Debug mode is on. Only a subset of the data will be used.")
 
     logger.info(f"device: {cfg.device}")
@@ -89,10 +89,6 @@ def main(cfg: DictConfig):
     )
 
     tokenizer = AutoTokenizer.from_pretrained(cfg.model)
-    option_to_token_id = {
-        "A": tokenizer.encode("A", add_special_tokens=False)[0],
-        "B": tokenizer.encode("B", add_special_tokens=False)[0],
-    }
 
     logger.info("Preprocessing the training data...")
     df_train = render_templates(
@@ -103,11 +99,6 @@ def main(cfg: DictConfig):
     )
     df_train = get_chat_conversation(df_train)
     df_train = apply_chat_template(df_train, tokenizer)
-    df_train = df_train[[
-        "id",
-        "text",
-        "winner",
-    ]].copy().reset_index(drop=True)
 
     for fold in range(cfg.cross_validation.n_folds):
         logger.info(f"Training fold: {fold}")
@@ -131,17 +122,19 @@ def main(cfg: DictConfig):
         model = get_peft_model(model, peft_config)
         model.print_trainable_parameters()
 
-        trainer = Trainer(
+        trainer = CausalLmTrainer(
             df_train=df_train_fold,
             df_valid=df_valid_fold,
             model=model,
             tokenizer=tokenizer,
             device=cfg.device,
-            epochs=cfg.epochs,
-            lr=cfg.lr,
-            eval_steps=cfg.eval_steps,
-            saturation_rounds=cfg.saturation_rounds,
+            epochs=cfg.training.epochs,
+            lr=cfg.training.lr,
+            eval_steps=cfg.training.eval_steps,
+            saturation_rounds=cfg.early_stopping.saturation_rounds,
             save_dir=out_dir / f"model_fold_{fold}",
+            early_stopping_criterion=cfg.early_stopping.criterion,
+            larger_is_better=cfg.early_stopping.larger_is_better,
         )
         trainer.train()
 

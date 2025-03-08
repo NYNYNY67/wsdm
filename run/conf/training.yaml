@@ -1,0 +1,4 @@
+training:
+  epochs: 10
+  lr: 1e-4
+  eval_steps: 500
