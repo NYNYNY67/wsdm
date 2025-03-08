@@ -1,5 +1,4 @@
 import pathlib
-from pprint import pprint
 from logzero import logger
 from omegaconf import DictConfig
 import hydra

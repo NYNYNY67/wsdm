@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 from torch.optim import AdamW
-# from bitsandbytes.optim import PagedAdam8bit as AdamW
 from transformers import (
     AutoTokenizer,
 )

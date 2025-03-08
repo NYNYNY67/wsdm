@@ -1,4 +1,3 @@
-from typing import Optional
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
@@ -6,7 +5,6 @@ from transformers import (
     AutoTokenizer,
 )
 from datasets import Dataset
-from trl import DataCollatorForCompletionOnlyLM
 
 
 def get_dataloader(
