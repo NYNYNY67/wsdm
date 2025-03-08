@@ -32,6 +32,7 @@ def main(cfg: DictConfig):
     out_dir = pathlib.Path(HydraConfig.get().runtime.output_dir)
 
     df_train = pd.read_parquet(data_dir / "original" / "train.parquet")
+    df_train = cross_validation(df_train, cfg.cross_validation.n_folds, cfg.cross_validation.random_state)
 
     if cfg.debug:
         df_train = df_train.sample(1000)
@@ -104,8 +105,6 @@ def main(cfg: DictConfig):
         "text",
         "winner",
     ]].copy().reset_index(drop=True)
-
-    df_train = cross_validation(df_train, cfg.cross_validation.n_folds, cfg.cross_validation.random_state)
 
     for fold in range(cfg.cross_validation.n_folds):
         logger.info(f"Training fold: {fold}")

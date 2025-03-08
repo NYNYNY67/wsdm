@@ -9,11 +9,13 @@ hydra:
 
 defaults:
   - preprocess.yaml
+  - cross_validation.yaml
   - _self_
 
 debug: false
 device: cuda
-model: Qwen/Qwen2.5-0.5B-Instruct
+model: Qwen/Qwen2.5-7B-Instruct
+peft_dir: data/outputs/classification_train/model_fold_0
 
 # https://huggingface.co/docs/transformers/ja/model_doc/auto#transformers.AutoModelForCausalLM.from_config.attn_implementation
 attn_implementation: flash_attention_2  # default: sdpa
@@ -23,3 +25,5 @@ quantization:
   enabled: true
   n_bit: 4
   bnb_4bit_quant_type: nf4
+
+fold: 0

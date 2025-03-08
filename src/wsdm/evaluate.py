@@ -2,8 +2,6 @@ from logzero import logger
 
 
 def evaluate(df_eval):
-    print(df_eval[["response", "pred", "winner"]].head())
-
     cnt_model_a = df_eval["winner"].value_counts().get("model_a", 0)
     cnt_model_b = df_eval["winner"].value_counts().get("model_b", 0)
 
