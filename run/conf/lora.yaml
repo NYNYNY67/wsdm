@@ -1,7 +1,7 @@
 lora:
-  lora_alpha: 16
-  lora_dropout: 0.05
-  r: 16
+  lora_alpha: 4
+  lora_dropout: 0
+  r: 32
   bias: none
   target_modules:
     - o_proj
