@@ -28,6 +28,7 @@ class CausalLmTrainer(Trainer):
         save_dir: pathlib.Path,
         early_stopping_criterion: str,
         larger_is_better: bool,
+        is_accelerate_enabled: bool,
     ):
         super().__init__(
             df_train=df_train,
@@ -42,6 +43,7 @@ class CausalLmTrainer(Trainer):
             save_dir=save_dir,
             early_stopping_criterion=early_stopping_criterion,
             larger_is_better=larger_is_better,
+            is_accelerate_enabled=is_accelerate_enabled,
         )
 
     def get_dataloader(self, df):
@@ -88,7 +90,12 @@ class CausalLmTrainer(Trainer):
         output = self.model(**batch, logits_to_keep=1)
 
         loss = output.loss
-        loss.backward()
+
+        if self.is_accelerate_enabled:
+            self.accelerator.backward(loss)
+        else:
+            loss.backward()
+
         self.optimizer.step()
         self.optimizer.zero_grad()
 

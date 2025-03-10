@@ -166,3 +166,6 @@ watch free
 ```
 watch vmstat
 ```
+
+# accelerateの設定
+https://huggingface.co/docs/accelerate/quicktour

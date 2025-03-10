@@ -135,6 +135,7 @@ def main(cfg: DictConfig):
             save_dir=out_dir / f"model_fold_{fold}",
             early_stopping_criterion=cfg.early_stopping.criterion,
             larger_is_better=cfg.early_stopping.larger_is_better,
+            is_accelerate_enabled=cfg.accelerate.is_enabled,
         )
         trainer.train()
 

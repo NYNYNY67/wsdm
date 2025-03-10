@@ -28,6 +28,7 @@ class Trainer:
         save_dir: pathlib.Path,
         early_stopping_criterion: str,
         larger_is_better: bool,
+        is_accelerate_enabled: bool,
     ):
         self.df_train = df_train
         self.df_valid = df_valid
@@ -41,6 +42,7 @@ class Trainer:
         self.save_dir = save_dir
         self.early_stopping_criterion = early_stopping_criterion
         self.larger_is_better = larger_is_better
+        self.is_accelerate_enabled = is_accelerate_enabled
 
         self.train_loader = self.get_dataloader(df_train)
         self.valid_loader = self.get_dataloader(df_valid)
@@ -61,6 +63,15 @@ class Trainer:
         self.train_metric_round = 0
 
         self.is_early_stopped = False
+
+        if is_accelerate_enabled:
+            from accelerate import Accelerator
+
+            self.accelerator = Accelerator()
+            self.model, self.optimizer, self.train_loader, self.valid_loader = self.accelerator.prepare(
+                self.model, self.optimizer, self.train_loader, self.valid_loader
+            )
+            self.device = self.accelerator.device
 
     def get_dataloader(self, df: pd.DataFrame):
         raise NotImplementedError()
